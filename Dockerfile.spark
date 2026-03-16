@@ -1,0 +1,98 @@
+FROM ubuntu:22.04
+
+# ── Build args ────────────────────────────────────────────────────────────────
+ARG SPARK_VERSION=3.5.2
+ARG HADOOP_VERSION=3
+ARG PYTHON_VERSION=3.10
+
+# ── System env ────────────────────────────────────────────────────────────────
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# ── System dependencies ───────────────────────────────────────────────────────
+RUN apt-get update && \
+    apt-get install -y \
+        openjdk-11-jdk \
+        wget \
+        curl \
+        python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-dev \
+        python3-pip && \
+    apt-get clean
+
+# ── Spark ─────────────────────────────────────────────────────────────────────
+ENV SPARK_HOME=/opt/spark
+ENV PATH=${SPARK_HOME}/bin:${PATH}
+
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+    tar -xvzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+
+ENV PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}
+
+# ── Python packages ───────────────────────────────────────────────────────────
+RUN pip3 install --upgrade pip
+
+RUN pip install --no-cache-dir jupyterlab
+RUN pip install --no-cache-dir \
+    jupyterlab \
+    scipy \
+    findspark \
+    "getdaft[all]" \
+    "sqlframe[all]" \
+    ipywidgets \
+    "ibis-framework[all]" \
+    notebook \
+    pandas \
+    numpy \
+    matplotlib \
+    seaborn \
+    scikit-learn \
+    tensorflow \
+    torch \
+    xgboost \
+    lightgbm \
+    dask \
+    statsmodels \
+    plotly \
+    openpyxl \
+    pyarrow \
+    sqlalchemy \
+    psycopg2-binary \
+    requests \
+    beautifulsoup4 \
+    lxml \
+    duckdb \
+    polars \
+    pyspark \
+    dremio-simple-query \
+    boto3 \
+    s3fs \
+    minio
+
+RUN pip install --no-cache-dir \
+    "pyiceberg[gcsfs,adlfs,s3fs,sql-sqlite,sql-postgres,glue,hive]"
+
+RUN pip install --no-cache-dir datafusion
+
+# ── Ports ─────────────────────────────────────────────────────────────────────
+EXPOSE 8889
+EXPOSE 4040
+EXPOSE 7077
+EXPOSE 8080
+EXPOSE 18080
+EXPOSE 6066
+EXPOSE 7078
+EXPOSE 8081
+
+# ── Workdir & profile ─────────────────────────────────────────────────────────
+WORKDIR /workspace
+
+RUN echo "umask 000" >> /etc/profile
+
+# ── Default command (mirrors the original image CMD) ─────────────────────────
+# CMD ["/bin/sh", "-c", "bash -c \"source /etc/profile && \
+#     $SPARK_HOME/sbin/start-master.sh && \
+#     $SPARK_HOME/sbin/start-worker.sh spark://$(hostname):7077 && \
+#     jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''\""]
