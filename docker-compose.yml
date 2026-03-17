@@ -42,15 +42,16 @@ services:
       - ./minio-data:/minio-data # Mount the local folder to container
     entrypoint: >
       /bin/sh -c "
-      minio server /data --console-address ':9001' &
-      sleep 5;
-      mc alias set myminio http://localhost:9000 admin password;
-      mc mb myminio/datalake;
-      mc mb myminio/datalakehouse;
-      mc mb myminio/warehouse;
-      mc mb myminio/seed;
-      mc cp /minio-data/* myminio/seed/;
-      tail -f /dev/null"
+        minio server /data --console-address ':9001' &
+        sleep 5;
+        mc alias set myminio http://localhost:9000 admin password;
+        mc mb myminio/datalake;
+        mc mb myminio/datalakehouse;
+        mc mb myminio/warehouse;
+        mc mb myminio/seed;
+        mc cp /minio-data/* myminio/seed/;
+        tail -f /dev/null
+      "
     networks:
       intro-network:
 
